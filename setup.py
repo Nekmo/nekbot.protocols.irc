@@ -18,7 +18,9 @@ setup(
     author='Nekmo',
     author_email='contacto@nekmo.com',
 
-    url='https://bitbucket.org/Nekmo/nekbot-irc',
+    url='https://bitbucket.org/Nekmo/nekbot.protocols.irc',
+    
+    download_url='https://bitbucket.org/Nekmo/nekbot.protocols.irc/get/default.tar.gz',
 
     classifiers=[
         'Natural Language :: Spanish',
@@ -43,7 +45,7 @@ setup(
     platforms=['linux'],
 
     scripts=[],
-
+    
     provides=['nekbot.protocols.irc',
               ],
     
@@ -52,7 +54,8 @@ setup(
     packages=['nekbot', 'nekbot.protocols', 'nekbot.protocols.irc'],
     include_package_data=True,
 
-    
+    keywords=['nekbot', 'bot', 'irc', 'chat'],
+
     entry_points={
         'nekbot.protocols': [
             'irc = nekbot.protocols.irc:MyIRC',

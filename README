@@ -1,0 +1,7 @@
+NekBot-IRC
+##########
+IRC protocol support for Nekbot, a modular and multiprotocol bot written in Python.
+
+Please! You need NekBot for use this module. This module not works without NekBot.
+
+https://bitbucket.org/Nekmo/nekbot-mirai/
