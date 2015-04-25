@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import defaultdict
 from logging import getLogger
 
@@ -29,9 +30,9 @@ logger = getLogger('nekbot.protocols.irc')
 # 'real_nickname': u'NekBot', 'handlers': {},
 # 'buffer': <irc.buffer.DecodingLineBuffer object at 0x7f44c2cf9e50>,
 # 'server_address': ('localhost', 6667), 'server': 'localhost',
-#  '_saved_connect': args_and_kwargs(args=('localhost', 6667, 'NekBot', None),
+# '_saved_connect': args_and_kwargs(args=('localhost', 6667, 'NekBot', None),
 # kwargs={'ircname': 'Nekbot Mirai IRC'}),
-#  'connect_factory': <irc.connection.Factory object at 0x7f44c2fb6490>,
+# 'connect_factory': <irc.connection.Factory object at 0x7f44c2fb6490>,
 # 'socket': <socket._socketobject object at 0x7f44c5d118a0>, 'connected': True,
 #  'real_server_name': u'irc.example.net', 'password': None, 'nickname': 'NekBot',
 #  'port': 6667, 'ircname': 'Nekbot Mirai IRC',
@@ -41,7 +42,7 @@ logger = getLogger('nekbot.protocols.irc')
 
 class ServerBot(irc.bot.SingleServerIRCBot):
     def __init__(self, protocol, groupchats_list, username, realname, server, port=6667):
-        self.groupchats = {} # {'groupchat': <Groupchat object>}
+        self.groupchats = {}  # {'groupchat': <Groupchat object>}
         self.groupchats_list = groupchats_list
         self.protocol = protocol
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], username, realname)
@@ -80,9 +81,12 @@ class ServerBot(irc.bot.SingleServerIRCBot):
         self.connection.join(channel, key)
 
     def on_join(self, connection, event):
-        groupchat = GroupChatIRC(self, self.channels[event.target], event.target, event.source)
-        self.groupchats[str(groupchat)] = groupchat
-        self.protocol.groupchats[str(groupchat)] = groupchat
+        if event.target not in self.groupchats:
+            # Se está entrando a la sala por primera vez
+            groupchat = GroupChatIRC(self, self.channels[event.target], event.target)
+            self.groupchats[str(groupchat)] = groupchat
+            self.protocol.groupchats[str(groupchat)] = groupchat
+            groupchat.get_users()
 
     def on_dccchat(self, channel, event):
         if len(event.arguments) != 2:
