@@ -2,6 +2,7 @@
 from setuptools import setup, find_packages
 import re
 from pip.req import parse_requirements
+import uuid
 
 
 requirements = parse_requirements('requirements.txt', session=uuid.uuid1())
