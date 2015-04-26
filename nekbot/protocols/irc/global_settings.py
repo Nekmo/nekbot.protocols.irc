@@ -11,3 +11,7 @@ IRC_AUTHS = {
 IRC_GROUPCHATS = [
     # 'groupchat@localhost',
 ]
+
+IRC_PERMISSIONS = {
+    # 'nekmo@localhost': ['root'],
+}
