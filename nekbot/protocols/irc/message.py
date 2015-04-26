@@ -28,8 +28,11 @@ class MessageIRC(Message):
 
     @property
     def is_private(self):
-        return self.event.type == 'privmsg'
+        return self.event.type in ['privmsg', 'privnotice']
 
     @property
     def is_public(self):
-        return self.event.type == 'pubmsg'
+        return self.event.type in ['pubmsg']
+
+    def _copy(self):
+        return self.__class__(self.server, self.event)

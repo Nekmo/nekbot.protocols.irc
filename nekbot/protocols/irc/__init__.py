@@ -4,13 +4,15 @@ from logging import getLogger
 
 import irc.bot
 import irc.strings
-from irc.client import ip_numstr_to_quad
+from irc.client import ip_numstr_to_quad, NickMask
+import threading
 
 from nekbot import settings
+from nekbot.core.commands.temp import TempRegex, TempTimeout, CancelTemp
 from nekbot.protocols import Protocol
 from nekbot.protocols.irc.group_chat import GroupChatsIRC, GroupChatIRC
 from nekbot.protocols.irc.message import MessageIRC
-from nekbot.protocols.irc.utils import add_sharp
+from nekbot.protocols.irc.utils import add_sharp, remove_sharp
 from nekbot.utils.auth import AuthAddress
 
 
@@ -21,64 +23,91 @@ __author__ = 'nekmo'
 
 logger = getLogger('nekbot.protocols.irc')
 
-# event:
-# {'source': u'nekmo!~nekmo@localhost.localdomain',
-# 'type': 'pubmsg', 'target': u'#testing', 'arguments': [u'jugou']}
-#
-# channel:
-# {'username': 'NekBot', 'reactor': <irc.client.Reactor object at 0x7f44c2cf9d50>,
-# 'real_nickname': u'NekBot', 'handlers': {},
-# 'buffer': <irc.buffer.DecodingLineBuffer object at 0x7f44c2cf9e50>,
-# 'server_address': ('localhost', 6667), 'server': 'localhost',
-# '_saved_connect': args_and_kwargs(args=('localhost', 6667, 'NekBot', None),
-# kwargs={'ircname': 'Nekbot Mirai IRC'}),
-# 'connect_factory': <irc.connection.Factory object at 0x7f44c2fb6490>,
-# 'socket': <socket._socketobject object at 0x7f44c5d118a0>, 'connected': True,
-#  'real_server_name': u'irc.example.net', 'password': None, 'nickname': 'NekBot',
-#  'port': 6667, 'ircname': 'Nekbot Mirai IRC',
-# 'features': <irc.features.FeatureSet object at 0x7f44c2cf9e10>}
-
-
 
 class ServerBot(irc.bot.SingleServerIRCBot):
     def __init__(self, protocol, groupchats_list, username, realname, server, port=6667):
+        self.identified_command = None
+        self.users = {} # Usuarios en el servidor conocidos.
         self.groupchats = {}  # {'groupchat': <Groupchat object>}
-        self.groupchats_list = groupchats_list
+        self.groupchats_list = groupchats_list # ['groupchat1', 'groupchat2']
         self.protocol = protocol
+        self.domain = server
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], username, realname)
 
     def input_message(self, event):
         self.protocol.propagate('message', MessageIRC(self, event))
 
-    def on_nicknameinuse(self, channel, event):
-        channel.nick(channel.get_nickname() + "_")
+    def _execute_identified_command(self, username, command=None, result=None):
+        if command is None:
+            command = self.identified_command
+        if result is None:
+            result = settings.IDENTIFIED_COMMANDS[command]
+        self.connection.send_raw(command % username)
+        pattern = result[0].format(username=username)
+        temp = TempRegex(self.protocol, pattern, timeout=3, no_raise=True)
+        for msg in temp.read():
+            if isinstance(msg, TempTimeout): break
+            if msg == CancelTemp: break
+            if msg.server != self: continue
+            temp.done()
+            return msg
+        return False
+
+    def _get_identified_command(self):
+        for command, result in settings.IDENTIFIED_COMMANDS.items():
+            if self._execute_identified_command(self.connection.get_nickname(), command, result) is not False:
+                logger.debug('Identified Command for %s: %s' % (self.domain, command))
+                self.identified_command = command
+                return result
+        logger.info('Identified Command unknown for server %s' % self.domain)
+        self.identified_command = False
+        return False
+
+    def get_identified_command(self):
+        l  = threading.Thread(target=self._get_identified_command)
+        l.start()
+
+    def get_identified(self, username):
+        """IRC no tiene una forma sencilla de comprobar si un usuario está autenticado.
+        Intentar descubrirlo.
+        """
+        if self.identified_command is False:
+            # No hay un comando conocido para saber si el usuario está conectado
+            return False
+        if self.identified_command is None:
+            return False
+            # self.get_identified_command()
+        msg = self._execute_identified_command(username)
+        if msg is False: return False
+        result = settings.IDENTIFIED_COMMANDS[self.identified_command]
+        if msg.match[0] == result[1]:
+            return True
+        return False
 
     def on_welcome(self, connection, event):
+        self.get_identified_command()
         for groupchat in self.groupchats_list:
             self.join_groupchat(add_sharp(groupchat))
 
+    def join_groupchat(self, channel, key=''):
+        self.connection.join(channel, key)
+
     def on_privmsg(self, connection, event):
         self.input_message(event)
-        # self.do_command(e, e.arguments[0])
 
     def on_pubmsg(self, connection, event):
-        # self.send_pubmsg('#testing', 'Message')
-        # connection.privmsg('Nekmo', 'Test')  # Mensaje privado
-        # self.connection.privmsg('#testing', 'Test')
         self.input_message(event)
-        a = event.arguments[0].split(":", 1)
-        if len(a) > 1 and irc.strings.lower(a[0]) == irc.strings.lower(self.connection.get_nickname()):
-            pass
-            # self.do_command(e, a[1].strip())
-        return
+
+    def on_privnotice(self, channel, event):
+        self.input_message(event)
+
+    def on_pubnotice(self, channel, event):
+        self.input_message(event)
 
     def on_dccmsg(self, channel, event):
         # non-chat DCC messages are raw bytes; decode as text
         text = event.arguments[0].decode('utf-8')
         channel.privmsg("You said: " + text)
-
-    def join_groupchat(self, channel, key=''):
-        self.connection.join(channel, key)
 
     def on_join(self, connection, event):
         if event.target not in self.groupchats:
@@ -87,6 +116,22 @@ class ServerBot(irc.bot.SingleServerIRCBot):
             self.groupchats[str(groupchat)] = groupchat
             self.protocol.groupchats[str(groupchat)] = groupchat
             groupchat.get_users()
+        else:
+            # Un usuario ha entrado a al sala
+            user = NickMask(event.source)
+            self.groupchats[remove_sharp(event.target)].users[str(user)] = user
+
+    def on_part(self, connection, event):
+        # {'source': u'nekmo!~nekmo@localhost.localdomain',
+        # 'type': u'part', 'target': u'#testing', 'arguments': [u'Saliendo']}
+        user = NickMask(event.source)
+        del self.groupchats[remove_sharp(event.target)].users[str(user)]
+
+    def on_mode(self, connection, event):
+        pass
+
+    def on_nicknameinuse(self, channel, event):
+        channel.nick(channel.get_nickname() + "_")
 
     def on_dccchat(self, channel, event):
         if len(event.arguments) != 2:
