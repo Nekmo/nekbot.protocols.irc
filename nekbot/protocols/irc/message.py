@@ -28,7 +28,7 @@ class MessageIRC(Message):
 
     @property
     def is_from_me(self):
-        return self.server.get_nickname() == self.user.username
+        return self.server.connection.get_nickname() == self.user.username
 
     @property
     def is_private(self):

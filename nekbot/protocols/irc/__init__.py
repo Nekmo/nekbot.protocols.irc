@@ -27,7 +27,7 @@ logger = getLogger('nekbot.protocols.irc')
 class ServerBot(irc.bot.SingleServerIRCBot):
     def __init__(self, protocol, groupchats_list, username, realname, server, port=6667):
         self.identified_command = None
-        self.users = {} # Usuarios en el servidor conocidos.
+        self.users_by_username = {} # Usuarios en el servidor conocidos.
         self.groupchats = {}  # {'groupchat': <Groupchat object>}
         self.groupchats_list = groupchats_list # ['groupchat1', 'groupchat2']
         self.protocol = protocol
@@ -35,6 +35,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], username, realname)
 
     def input_message(self, event):
+        logger.debug('Incoming message: %s' % event.arguments[0])
         self.protocol.propagate('message', MessageIRC(self, event))
 
     def _execute_identified_command(self, username, command=None, result=None):
@@ -44,7 +45,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
             result = settings.IDENTIFIED_COMMANDS[command]
         self.connection.send_raw(command % username)
         pattern = result[0].format(username=username)
-        temp = TempRegex(self.protocol, pattern, timeout=3, no_raise=True)
+        temp = TempRegex(self.protocol, pattern, timeout=6, no_raise=True)
         for msg in temp.read():
             if isinstance(msg, TempTimeout): break
             if msg == CancelTemp: break
@@ -130,8 +131,8 @@ class ServerBot(irc.bot.SingleServerIRCBot):
     def on_mode(self, connection, event):
         pass
 
-    def on_nicknameinuse(self, channel, event):
-        channel.nick(channel.get_nickname() + "_")
+    def on_nicknameinuse(self, connection, event):
+        connection.nick(connection.get_nickname() + "_")
 
     def on_dccchat(self, channel, event):
         if len(event.arguments) != 2:
