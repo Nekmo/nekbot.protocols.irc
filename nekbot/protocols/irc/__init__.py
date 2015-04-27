@@ -183,6 +183,11 @@ class Irc(Protocol):
         self._groupchats_by_server = defaultdict(list)  # {server: [groupchat@server]}
         super(Irc, self).__init__(nekbot)
 
+    def prepare_message(self, body):
+        if not isinstance(body, (str, unicode)):
+            body = str(body)
+        return body
+
     def init(self):
         for address in self._addresses:
             self._groupchats_by_server[address.endpoint].append(address)
