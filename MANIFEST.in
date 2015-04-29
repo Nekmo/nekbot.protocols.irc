@@ -1,6 +1,6 @@
-include MANIFEST.in
 include VERSION
 include LICENSE.txt
+include MANIFEST.in
 include README
 include contributors.txt
 include nekbot/__init__.py
