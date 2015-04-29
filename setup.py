@@ -4,6 +4,8 @@ import re
 from pip.req import parse_requirements
 import uuid
 
+VERSION = open('VERSION').read().replace('\n', '')
+ROOT_INCLUDE = ['requirements.txt', 'VERSION', 'LICENSE.txt']
 
 requirements = parse_requirements('requirements.txt', session=uuid.uuid1())
 install_requires = [str(ir.req) for ir in requirements if not ir.url]
@@ -11,7 +13,7 @@ install_requires = [str(ir.req) for ir in requirements if not ir.url]
 setup(
     name='nekbot.protocols.irc',
     namespace_packages = ['nekbot.protocols'],
-    version='0.1',
+    version=VERSION,
 
     description='IRC Protocol for Nekbot, a modular multiprotocol bot.',
 
@@ -61,6 +63,8 @@ setup(
             'irc = nekbot.protocols.irc:MyIRC',
         ],
     },
+        
+    package_data = {'': ROOT_INCLUDE},
 
     zip_safe=False,
 )
