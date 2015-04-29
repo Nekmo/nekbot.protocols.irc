@@ -7,8 +7,13 @@ import uuid
 VERSION = open('VERSION').read().replace('\n', '')
 ROOT_INCLUDE = ['requirements.txt', 'VERSION', 'LICENSE.txt']
 
+def get_url(ir):
+    if hasattr(ir, 'url'): return ir.url
+    if ir.link is None: return
+    return ir.link.url
+
 requirements = parse_requirements('requirements.txt', session=uuid.uuid1())
-install_requires = [str(ir.req) for ir in requirements if not ir.url]
+install_requires = [str(ir.req) for ir in requirements if get_url(ir)]
 
 setup(
     name='nekbot.protocols.irc',
