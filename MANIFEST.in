@@ -1,0 +1,14 @@
+include 
+include LICENSE.txt
+include README
+include VERSION
+include contributors.txt
+include nekbot/__init__.py
+include nekbot/protocols/__init__.py
+include nekbot/protocols/irc/__init__.py
+include nekbot/protocols/irc/global_settings.py
+include nekbot/protocols/irc/message.py
+include requirements.txt
+include setup.cfg
+include setup.py
+include MANIFEST.in
