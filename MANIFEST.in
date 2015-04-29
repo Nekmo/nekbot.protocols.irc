@@ -1,7 +1,6 @@
-include 
-include MANIFEST.in
 include LICENSE.txt
 include README
+include VERSION
 include contributors.txt
 include nekbot/__init__.py
 include nekbot/protocols/__init__.py
@@ -11,4 +10,4 @@ include nekbot/protocols/irc/message.py
 include requirements.txt
 include setup.cfg
 include setup.py
-include VERSION
+include MANIFEST.in
