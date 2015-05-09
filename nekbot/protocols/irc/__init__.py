@@ -14,6 +14,7 @@ from nekbot.protocols.irc.group_chat import GroupChatsIRC, GroupChatIRC
 from nekbot.protocols.irc.message import MessageIRC
 from nekbot.protocols.irc.utils import add_sharp, remove_sharp
 from nekbot.utils.auth import AuthAddress
+from nekbot.utils.modules import get_module
 
 
 """
@@ -26,6 +27,7 @@ logger = getLogger('nekbot.protocols.irc')
 
 class ServerBot(irc.bot.SingleServerIRCBot):
     def __init__(self, protocol, groupchats_list, username, realname, server, port=6667):
+        self.on_start = []
         self.identified_command = None
         self.users_by_username = {} # Usuarios en el servidor conocidos.
         self.groupchats = {}  # {'groupchat': <Groupchat object>}
@@ -87,6 +89,8 @@ class ServerBot(irc.bot.SingleServerIRCBot):
 
     def on_welcome(self, connection, event):
         self.get_identified_command()
+        for on_start in self.on_start:
+            on_start(self)
         for groupchat in self.groupchats_list:
             self.join_groupchat(add_sharp(groupchat))
 
@@ -204,6 +208,9 @@ class Irc(Protocol):
                 server.host,  # hostname without port
                 server.port if server.port else 6667  # server port
             )
+            if 'method' in auth:
+                AuthMethod = get_module('nekbot.protocols.irc.auth.%s' % auth['method'])
+                serverbot.on_start.append(AuthMethod(auth))
             self.servers.append(serverbot)
 
     def run(self):
