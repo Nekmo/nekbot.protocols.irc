@@ -176,6 +176,9 @@ class ServerBot(irc.bot.SingleServerIRCBot):
             #     else:
             #         c.notice(nick, "Not understood: " + cmd)
 
+    def close(self):
+        self.connection.close()
+
 
 class Irc(Protocol):
     features = ['notice']
@@ -216,3 +219,7 @@ class Irc(Protocol):
     def run(self):
         for server in self.servers:
             server.start()
+
+    def close(self):
+        for server in self.servers:
+            server.close()
