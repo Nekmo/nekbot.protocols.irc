@@ -10,12 +10,11 @@ class MessageIRC(Message):
         self.server = server
         self.event = event
         body = event.arguments[0]
-        if self.is_groupchat:
-            groupchat = server.groupchats[remove_sharp(event.target)]
-        else:
-            groupchat = None
         user = UserIRC(server, event.source)
-        super(MessageIRC, self).__init__(server.protocol, body, user, groupchat)
+        super(MessageIRC, self).__init__(server.protocol, body, user)
+
+    def get_group_chat_id(self):
+        return '%s@%s' % (remove_sharp(self.event.target), self.server.domain)
 
     @property
     def is_groupchat(self):

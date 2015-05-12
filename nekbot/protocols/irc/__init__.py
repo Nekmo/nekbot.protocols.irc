@@ -29,9 +29,9 @@ class ServerBot(irc.bot.SingleServerIRCBot):
     def __init__(self, protocol, groupchats_list, username, realname, server, port=6667):
         self.on_start = []
         self.identified_command = None
-        self.users_by_username = {} # Usuarios en el servidor conocidos.
+        self.users_by_username = {}  # Usuarios en el servidor conocidos.
         self.groupchats = {}  # {'groupchat': <Groupchat object>}
-        self.groupchats_list = groupchats_list # ['groupchat1', 'groupchat2']
+        self.groupchats_list = groupchats_list  # ['groupchat1', 'groupchat2']
         self.protocol = protocol
         self.domain = server
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], username, realname)
@@ -67,7 +67,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
         return False
 
     def get_identified_command(self):
-        l  = threading.Thread(target=self._get_identified_command)
+        l = threading.Thread(target=self._get_identified_command)
         l.start()
 
     def get_identified(self, username):
@@ -118,7 +118,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
         if event.target not in self.groupchats:
             # Se está entrando a la sala por primera vez
             groupchat = GroupChatIRC(self, self.channels[event.target], event.target)
-            self.groupchats[str(groupchat)] = groupchat
+            self.groupchats[remove_sharp(event.target)] = groupchat
             self.protocol.groupchats[str(groupchat)] = groupchat
             groupchat.get_users()
         else:
@@ -154,7 +154,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
             # nick = e.source.nick
             # c = self.connection
             #
-            #     if cmd == "disconnect":
+            # if cmd == "disconnect":
             #         self.disconnect()
             #     elif cmd == "die":
             #         self.die()
@@ -185,7 +185,6 @@ class Irc(Protocol):
 
     def __init__(self, nekbot):
         self.servers = []
-        self.groupchats = GroupChatsIRC(self)
         self._addresses = [AuthAddress(addr) for addr in settings.IRC_GROUPCHATS]  # groupchat@server
         self._groupchats_by_server = defaultdict(list)  # {server: [groupchat@server]}
         super(Irc, self).__init__(nekbot)
