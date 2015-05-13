@@ -26,7 +26,7 @@ class MessageIRC(Message):
             raise NotImplementedError('Improperly implementation of is_groupchat.')
 
     @property
-    def is_from_me(self):
+    def is_own(self):
         return self.server.connection.get_nickname() == self.user.username
 
     @property
