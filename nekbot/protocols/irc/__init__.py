@@ -181,7 +181,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
 
 
 class Irc(Protocol):
-    features = ['notice', 'groupchats']
+    features = ['notice', 'groupchats', 'wide_messages']
 
     def __init__(self, nekbot):
         self.servers = []
