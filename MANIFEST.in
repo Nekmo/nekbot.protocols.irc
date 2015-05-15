@@ -6,8 +6,12 @@ include contributors.txt
 include nekbot/__init__.py
 include nekbot/protocols/__init__.py
 include nekbot/protocols/irc/__init__.py
+include nekbot/protocols/irc/auth.py
 include nekbot/protocols/irc/global_settings.py
+include nekbot/protocols/irc/group_chat.py
 include nekbot/protocols/irc/message.py
+include nekbot/protocols/irc/user.py
+include nekbot/protocols/irc/utils.py
 include requirements.txt
 include setup.cfg
 include setup.py
