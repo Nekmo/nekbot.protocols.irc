@@ -6,7 +6,7 @@ __author__ = 'nekmo'
 
 
 class UserIRC(User):
-    def __init__(self, server, user):
+    def __init__(self, server, user, user_id=None, groupchat=None):
         user = NickMask(user)
         # user.nick
         # user.userhost

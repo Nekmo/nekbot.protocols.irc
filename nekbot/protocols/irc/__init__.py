@@ -12,6 +12,7 @@ from nekbot.core.commands.temp import TempRegex, TempTimeout, CancelTemp
 from nekbot.protocols import Protocol
 from nekbot.protocols.irc.group_chat import GroupChatsIRC, GroupChatIRC
 from nekbot.protocols.irc.message import MessageIRC
+from nekbot.protocols.irc.user import UserIRC
 from nekbot.protocols.irc.utils import add_sharp, remove_sharp
 from nekbot.utils.auth import AuthAddress
 from nekbot.utils.modules import get_module
@@ -24,6 +25,7 @@ __author__ = 'nekmo'
 
 logger = getLogger('nekbot.protocols.irc')
 
+irc.client.ServerConnection.buffer_class.errors = 'replace'
 
 class ServerBot(irc.bot.SingleServerIRCBot):
     def __init__(self, protocol, groupchats_list, username, realname, server, port=6667):
@@ -182,6 +184,7 @@ class ServerBot(irc.bot.SingleServerIRCBot):
 
 class Irc(Protocol):
     features = ['notice', 'groupchats', 'wide_messages']
+    user_class = UserIRC
 
     def __init__(self, nekbot):
         self.servers = []
