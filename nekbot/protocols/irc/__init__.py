@@ -194,7 +194,7 @@ class Irc(Protocol):
 
     def prepare_message(self, body):
         if not isinstance(body, (str, unicode)):
-            body = str(body)
+            body = unicode(body)
         try:
             body = body.decode('utf-8')
         except:
